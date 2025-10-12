@@ -3,7 +3,7 @@ import { Hono } from "hono";
 const app = new Hono();
 
 app.get("/", (c) => {
-    console.log("ok");
+    console.log(c.env.TELEGRAM_BOT_TOKEN);
     return c.text("Hello Hono!");
 });
 

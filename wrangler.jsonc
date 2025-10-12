@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "diary_dompetku",
   "main": "src/index.ts",
-  "compatibility_date": "2025-10-12"
+  "compatibility_date": "2025-10-12",
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
@@ -31,8 +31,8 @@
   // "ai": {
   //   "binding": "AI"
   // },
-  // "observability": {
-  //   "enabled": true,
-  //   "head_sampling_rate": 1
-  // }
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 100
+  }
 }
