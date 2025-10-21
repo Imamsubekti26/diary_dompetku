@@ -1,5 +1,10 @@
 import { Hono } from "hono";
-import { extractGeminiText, sendQuetion } from "./repository/gemini";
+import { extractGeminiText, sendQuetion } from "./tools/gemini";
+import {
+    generateSuccessMessage,
+    sendMessage,
+    updateMessage,
+} from "./tools/telegram";
 
 type Bindings = {
     TELEGRAM_BOT_TOKEN: string;
@@ -12,41 +17,51 @@ app.get("/", (c) => {
     return c.text("Apa lo liat-liat!");
 });
 
+app.post("/ask", async (c) => {
+    const geminiApiKey = c.env.GEMINI_API_KEY;
+    const body = await c.req.json();
+
+    const result = await sendQuetion(body?.question || "hi", {
+        apiKey: geminiApiKey,
+    });
+    return c.json({ data: extractGeminiText(result) });
+});
+
 app.post("/webhook", async (c) => {
     const geminiApiKey = c.env.GEMINI_API_KEY;
     const token = c.env.TELEGRAM_BOT_TOKEN;
     const body = await c.req.json();
 
-    const message = body?.message?.text;
     const chatId = body?.message?.chat?.id;
+    if (!chatId) {
+        return c.json({ ok: true });
+    }
 
-    if (message && chatId) {
-        const res = await sendQuetion(message, {
-            apiKey: geminiApiKey,
-        });
+    // Handle New Message
+    const message: string = body?.message?.text;
+    if (message) {
+        // Filter message "ya"
+        if (['ya', 'y', 'yes', 'ok', 'sip'].includes(message.toLowerCase())) {
+            await sendMessage(token, chatId, "sip, transaksimu tercatat!");
+            return c.json({ ok: true });
+        }
 
+        // Send loading message first
+        const messageId = await sendMessage(token, chatId, "_Loading..._");
+        if (!messageId) {
+            return c.json({ ok: true });
+        }
+
+        // summarize by gemini
+        const res = await sendQuetion(message, { apiKey: geminiApiKey });
         const result = extractGeminiText(res);
 
         let reply = `Maaf, ada kesalahan dalam memproses permintaanmu. pastikan keterangan dan nominal yang kamu tulis jelas.`;
-        if (result.success) {
-            reply =
-                `*📋 Berikut rincian transaksimu:*\n\n` +
-                `*Jenis Transaksi:* ${result.is_out ? "🔴 Pengeluaran" : "🟢 Pendapatan"}\n` +
-                `*Nominal:* ${result.total?.toLocaleString("id-ID", { style: "currency", currency: "IDR" })}\n` +
-                `*Keterangan:* ${result.activity || "-"}\n` +
-                `*Kategori:* ${result.category || "-"}\n` +
-                `*Tanggal:* ${new Date(result.time || "").toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}`;
+        if (result[0].success) {
+            reply = generateSuccessMessage(result);
         }
 
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: reply,
-                parse_mode: "Markdown",
-            }),
-        });
+        await updateMessage(token, chatId, messageId, reply);
     }
 
     return c.json({ ok: true });
