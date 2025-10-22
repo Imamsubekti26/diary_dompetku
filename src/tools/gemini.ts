@@ -8,7 +8,7 @@ type geminiResponse = {
     total?: number;
     category?: string;
     activity?: string;
-    is_out?: boolean;
+    type?: string;
 };
 
 export const sendQuetion = async (content: string, config: geminiConfig) => {
