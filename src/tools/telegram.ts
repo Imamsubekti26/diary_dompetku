@@ -16,13 +16,10 @@ export const generateSuccessMessage = (data: Array<object>) => {
         })
         .join("\n\n");
 
-    return `Berikut rincian transaksimu:\n\n${formatted}\n\nKetik *YA* untuk mengkonfirmasi, atau command /edit diikuti pesan untuk mengedit.`;
+    return `Berikut rincian transaksimu:\n\n${formatted}\n\nApakah rincian transaksi sudah benar?`;
 };
 
-const baseMessageResponse = async (
-    url: string,
-    data: object,
-) => {
+const baseMessageResponse = async (url: string, data: object) => {
     try {
         const response = await fetch(url, {
             method: "POST",
@@ -50,25 +47,70 @@ const baseMessageResponse = async (
     }
 };
 
-export const sendMessage = async (token: string, chatId: string, message: string) => {
+export const sendMessage = async (
+    token: string,
+    chatId: string,
+    message: string,
+    callback_action?: any[],
+) => {
+    const payload: any = {
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown",
+    };
+
+    if (callback_action && callback_action.length > 0) {
+        payload.reply_markup = { inline_keyboard: [callback_action] };
+    }
+
     return await baseMessageResponse(
         `https://api.telegram.org/bot${token}/sendMessage`,
-        {
-            chat_id: chatId,
-            text: message,
-            parse_mode: "Markdown",
-        },
+        payload,
     );
 };
 
-export const updateMessage = async (token: string, chatId: string, messageId: string, message: string) => {
+export const updateMessage = async (
+    token: string,
+    chatId: string,
+    messageId: string,
+    message: string,
+    callback_action?: any[],
+) => {
+    const payload: any = {
+        chat_id: chatId,
+        message_id: messageId,
+        text: message,
+        parse_mode: "Markdown",
+    };
+
+    if (callback_action && callback_action.length > 0) {
+        payload.reply_markup = { inline_keyboard: [callback_action] };
+    }
+
     return await baseMessageResponse(
         `https://api.telegram.org/bot${token}/editMessageText`,
-        {
-            chat_id: chatId,
-            message_id: messageId,
-            text: message,
-            parse_mode: "Markdown",
-        },
+        payload,
+    );
+};
+
+export const updateCallbackButton = async (
+    token: string,
+    chatId: string,
+    messageId: string,
+    callback_action?: any[],
+) => {
+    const payload: any = {
+        chat_id: chatId,
+        message_id: messageId,
+        reply_markup: {},
+    };
+
+    if (callback_action && callback_action.length > 0) {
+        payload.reply_markup = { inline_keyboard: [callback_action] };
+    }
+
+    return await baseMessageResponse(
+        `https://api.telegram.org/bot${token}/editMessageReplyMarkup`,
+        payload,
     );
 };
