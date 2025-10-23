@@ -108,4 +108,8 @@ webhook.post("/", async (c) => {
     return c.json({ ok: true });
 });
 
+webhook.get("/", (c) => {
+    return c.text("Telegram webhook endpoint is alive ✅");
+});
+
 export default webhook;
