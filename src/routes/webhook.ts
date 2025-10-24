@@ -6,13 +6,14 @@ import {
     updateMessage,
 } from "../tools/telegram";
 import { extractGeminiText, sendQuetion } from "../tools/gemini";
-import { AnyD1Database, drizzle } from "drizzle-orm/d1";
+import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../db/schema";
+import { registerNewChat } from "../tools/database";
 
 type Bindings = {
     TELEGRAM_BOT_TOKEN: string;
     GEMINI_API_KEY: string;
-    DB: AnyD1Database;
+    DB: D1Database;
 };
 
 const webhook = new Hono<{ Bindings: Bindings }>();
@@ -37,11 +38,13 @@ webhook.post("/", async (c) => {
 
         /* ==== Handle "start" command ==== */
         if (message.toLocaleLowerCase() === "/start") {
-            await sendMessage(
-                token,
-                chatId,
-                "ketik sesuatu. misal: 'beli batagor 10 ribu'",
-            );
+            if (await registerNewChat(db, chatId)) {
+                await sendMessage(
+                    token,
+                    chatId,
+                    "Selamat datang! ketik sesuatu. misal: 'beli batagor 10 ribu'",
+                );
+            }
             return c.json({ ok: true });
         }
 
