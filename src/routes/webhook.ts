@@ -6,10 +6,13 @@ import {
     updateMessage,
 } from "../tools/telegram";
 import { extractGeminiText, sendQuetion } from "../tools/gemini";
+import { AnyD1Database, drizzle } from "drizzle-orm/d1";
+import * as schema from "../db/schema";
 
 type Bindings = {
     TELEGRAM_BOT_TOKEN: string;
     GEMINI_API_KEY: string;
+    DB: AnyD1Database;
 };
 
 const webhook = new Hono<{ Bindings: Bindings }>();
@@ -18,6 +21,9 @@ webhook.post("/", async (c) => {
     const geminiApiKey = c.env.GEMINI_API_KEY;
     const token = c.env.TELEGRAM_BOT_TOKEN;
     const body = await c.req.json();
+
+    // init DB
+    const db = drizzle(c.env.DB, { schema });
 
     // Handle New Message
     const message: string = body?.message?.text;

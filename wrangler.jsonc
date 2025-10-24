@@ -21,13 +21,13 @@
   //     "bucket_name": "my-bucket"
   //   }
   // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "diary-dompetku",
+      "database_id": "a5e87e1b-fcf6-4a0c-b6b1-b883b2de6ca5"
+    }
+  ],
   // "ai": {
   //   "binding": "AI"
   // },
