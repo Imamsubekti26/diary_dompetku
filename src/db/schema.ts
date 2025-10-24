@@ -31,7 +31,7 @@ export const categories = table("categories", {
         .int("chat_id")
         .references(() => chatrooms.id)
         .notNull(),
-    walletName: t.text("wallet_name").notNull(),
+    categoryName: t.text("category_name").notNull(),
 });
 
 export const transactions = table("transactions", {

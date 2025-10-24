@@ -1,0 +1,1 @@
+ALTER TABLE `categories` RENAME COLUMN "wallet_name" TO "category_name";
