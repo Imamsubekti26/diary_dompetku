@@ -16,39 +16,37 @@ export const registerNewChat = async (
             .get();
         if (exist) return true;
 
-        await db.transaction(async (tx) => {
-            // masukkan ke chatrooms
-            const newChatroom = {
-                id: chatId,
-                register_at: registerAt,
-            };
-            await tx.insert(schema.chatrooms).values(newChatroom);
+        // masukkan ke chatrooms
+        const newChatroom = {
+            id: chatId,
+            register_at: registerAt,
+        };
+        await db.insert(schema.chatrooms).values(newChatroom);
 
-            // buatkan default walletnya
-            const walletList = ["Cash", "Bank BCA", "Dana"];
-            const defaultWallet = "Cash";
-            const newWallets = walletList.map((wallet) => ({
-                walletName: wallet,
-                chatId: chatId,
-                isDefault: wallet === defaultWallet,
-            }));
-            await tx.insert(schema.wallets).values(newWallets);
+        // buatkan default walletnya
+        const walletList = ["Cash", "Bank BCA", "Dana"];
+        const defaultWallet = "Cash";
+        const newWallets = walletList.map((wallet) => ({
+            walletName: wallet,
+            chatId: chatId,
+            isDefault: wallet === defaultWallet,
+        }));
+        await db.insert(schema.wallets).values(newWallets);
 
-            // buatkan default categorynya
-            const categoryList = [
-                "Lain-lain",
-                "Makanan",
-                "Transportasi",
-                "Hiburan",
-                "Akomondasi",
-                "Belanja",
-            ];
-            const newCategories = categoryList.map((category) => ({
-                chatId: chatId,
-                categoryName: category,
-            }));
-            await tx.insert(schema.categories).values(newCategories);
-        });
+        // buatkan default categorynya
+        const categoryList = [
+            "Lain-lain",
+            "Makanan",
+            "Transportasi",
+            "Hiburan",
+            "Akomondasi",
+            "Belanja",
+        ];
+        const newCategories = categoryList.map((category) => ({
+            chatId: chatId,
+            categoryName: category,
+        }));
+        await db.insert(schema.categories).values(newCategories);
 
         return true;
     } catch (error) {
