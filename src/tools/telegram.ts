@@ -1,3 +1,7 @@
+import { DrizzleD1Database } from "drizzle-orm/d1";
+import * as schema from "../db/schema";
+import { eq } from "drizzle-orm";
+
 export const generateSuccessMessage = (data: Array<object>) => {
     const formatted = data
         .map((item: any) => {
@@ -10,7 +14,7 @@ export const generateSuccessMessage = (data: Array<object>) => {
                 `*${title}: ${nominal}*\n` +
                 `- *Keterangan*: ${item.activity}\n` +
                 `- *Kategori*: ${item.category}\n` +
-                `- *Dompet*: Cash\n` +
+                `- *Dompet*: ${item.wallet}\n` +
                 `- *Tanggal*: ${date}\n`
             );
         })
@@ -19,7 +23,11 @@ export const generateSuccessMessage = (data: Array<object>) => {
     return `Berikut rincian transaksimu:\n\n${formatted}\n\nApakah rincian transaksi sudah benar?`;
 };
 
-const baseMessageResponse = async (url: string, data: object) => {
+const baseMessageResponse = async (
+    url: string,
+    data: any,
+    db?: DrizzleD1Database<typeof schema>,
+) => {
     try {
         const response = await fetch(url, {
             method: "POST",
@@ -40,7 +48,18 @@ const baseMessageResponse = async (url: string, data: object) => {
             );
         }
 
-        return result.result.message_id;
+        const messageId = result.result.message_id;
+
+        if (db) {
+            await db
+                .update(schema.chatrooms)
+                .set({
+                    lastBotMessageId: messageId,
+                })
+                .where(eq(schema.chatrooms.id, data.chat_id));
+        }
+
+        return messageId;
     } catch (error) {
         console.error("Error sending message:", error);
         return null;
@@ -51,6 +70,7 @@ export const sendMessage = async (
     token: string,
     chatId: string,
     message: string,
+    db?: DrizzleD1Database<typeof schema>,
     callback_action?: any[],
 ) => {
     const payload: any = {
@@ -66,6 +86,7 @@ export const sendMessage = async (
     return await baseMessageResponse(
         `https://api.telegram.org/bot${token}/sendMessage`,
         payload,
+        db,
     );
 };
 

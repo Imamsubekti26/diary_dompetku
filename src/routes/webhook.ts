@@ -43,6 +43,7 @@ webhook.post("/", async (c) => {
                     token,
                     chatId,
                     "Selamat datang! ketik sesuatu. misal: 'beli batagor 10 ribu'",
+                    db,
                 );
             }
             return c.json({ ok: true });
@@ -51,13 +52,16 @@ webhook.post("/", async (c) => {
         /* ==== Handle random message ==== */
 
         // Send loading message first
-        const messageId = await sendMessage(token, chatId, "_Loading..._");
+        const messageId = await sendMessage(token, chatId, "_Loading..._", db);
         if (!messageId) {
             return c.json({ ok: true });
         }
 
         // summarize by gemini
-        const res = await sendQuetion(message, { apiKey: geminiApiKey });
+        const res = await sendQuetion(message, chatId, {
+            apiKey: geminiApiKey,
+            db,
+        });
         const result = extractGeminiText(res);
 
         // Default message
@@ -107,7 +111,7 @@ webhook.post("/", async (c) => {
 
         if (callbackQuery === "confirm_transaction") {
             await updateCallbackButton(token, chatId, messageId);
-            await sendMessage(token, chatId, "sip, transaksimu tersimpan");
+            await sendMessage(token, chatId, "sip, transaksimu tersimpan", db);
             return c.json({ ok: true });
         }
 

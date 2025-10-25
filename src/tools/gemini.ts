@@ -1,5 +1,10 @@
+import { DrizzleD1Database } from "drizzle-orm/d1";
+import * as schema from "../db/schema";
+import { eq } from "drizzle-orm";
+
 type geminiConfig = {
     apiKey: string;
+    db?: DrizzleD1Database<typeof schema>;
 };
 
 type geminiResponse = {
@@ -11,7 +16,11 @@ type geminiResponse = {
     type?: string;
 };
 
-export const sendQuetion = async (content: string, config: geminiConfig) => {
+export const sendQuetion = async (
+    content: string,
+    chatId: number,
+    config: geminiConfig,
+) => {
     const geminiEndpoint =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
     const response = await fetch(geminiEndpoint, {
@@ -22,7 +31,7 @@ export const sendQuetion = async (content: string, config: geminiConfig) => {
         },
         body: JSON.stringify({
             system_instruction: {
-                parts: [{ text: systemInstruction() }],
+                parts: [{ text: await systemInstruction(chatId, config.db) }],
             },
             contents: [
                 {
@@ -37,20 +46,43 @@ export const sendQuetion = async (content: string, config: geminiConfig) => {
     return response.json();
 };
 
-const systemInstruction = () => {
+const systemInstruction = async (
+    chatId: number,
+    db?: DrizzleD1Database<typeof schema>,
+) => {
+    const categories = await db
+        ?.select({
+            id: schema.categories.id,
+            categoryName: schema.categories.categoryName,
+        })
+        .from(schema.categories)
+        .where(eq(schema.categories.chatId, chatId));
+
+    const wallets = await db
+        ?.select({
+            id: schema.wallets.id,
+            walletName: schema.wallets.walletName,
+            isDefault: schema.wallets.isDefault,
+        })
+        .from(schema.wallets)
+        .where(eq(schema.wallets.chatId, chatId));
+
     const text = `
         Konteks: transaksi keuangan.
         hari ini: ${new Date().toDateString()}.
+        Category Data: ${JSON.stringify(categories)}.
+        Wallet Data: ${JSON.stringify(wallets)}.
         Aturan:
         - tanpa penjelasan;
         - bisa lebih dari satu hasil;
         - waktu default: hari ini jika tidak disebut;
+        - sesuaikan category dan wallet sesuai data yang diberikan;
         - tipe pesan: in/out/summary;
         - in/out: pada text, wajib ada activity & total; jika tidak ada, hasil [{success:false,type:out}];
         - tipe summary: gunakan rentang tanggal, default minggu ini;
         Format:
-        in/out → [{success:true,time:'YYYY-mm-dd',total:number,category:'string',activity:'string',type:in/out}]
-        summary → [{success:true,type:summary,from:'YYYY-mm-dd',to:'YYYY-mm-dd'}]
+        - in/out → [{success:true,time:'YYYY-mm-dd',total:number,category:'string',category_id:number,wallet:'string',wallet_id:number,activity:'string',type:in/out}]
+        - summary → [{success:true,type:summary,from:'YYYY-mm-dd',to:'YYYY-mm-dd'}]
         `;
     return text;
 };
