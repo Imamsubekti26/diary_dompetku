@@ -9,24 +9,21 @@ tidak perlu ribet, tulis dengan gaya bahasamu dan biarkan bot merangkumnya.
 3. mulai obrolan dengan bot: tulis transaksi harianmu dengan gaya bahasamu sendiri
 
 ## Cara instalasi (untuk developer)
-```txt
+1. Download atau clone repository ini
+
+2. Install dependency yang dibutuhkan
+```bash
 npm install
+```
+
+3. Setup env
+```bash
+cp .env.example .env
+```
+- kemudian sesuaikan dengan environtment milikmu
+- sesuaikan juga database_id pada file `wrangler.jsonc`
+
+4. Jalankan local server
+```bash
 npm run dev
-```
-
-```txt
-npm run deploy
-```
-
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
-
-```txt
-npm run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
 ```
