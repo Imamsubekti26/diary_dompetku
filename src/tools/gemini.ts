@@ -12,6 +12,9 @@ type geminiResponse = {
     time?: string;
     total?: number;
     category?: string;
+    category_id?: number;
+    wallet?: string;
+    wallet_id?: number;
     activity?: string;
     type?: string;
 };
